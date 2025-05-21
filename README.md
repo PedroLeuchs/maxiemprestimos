@@ -73,7 +73,7 @@ O sistema Maxi Empréstimos é uma aplicação completa para gerenciamento de op
 2. Execute a aplicação em modo de desenvolvimento:
 
    ```bash
-   npm start
+   ng serve
    ```
 
 3. Acesse http://localhost:4200 no navegador
@@ -129,6 +129,3 @@ ng generate component    # Gerar novo componente
 ng serve --port 4201     # Executar em porta alternativa
 ```
 
-## Licença
-
-Este projeto é licenciado sob a [Licença MIT](LICENSE).
