@@ -1,0 +1,224 @@
+<div
+  class="w-full px-2 sm:px-4 py-2 sm:py-4 h-auto sm:h-[60vh] flex flex-col items-start justify-start p-5 sm:p-20 gap-5"
+  [@notificationAnimation]
+>
+  <div
+    class="flex flex-col md:flex-row w-full justify-between gap-4 sm:gap-10 h-full"
+  >
+    <!-- Formulário de cadastro de empréstimos (lado esquerdo) -->
+    <div class="w-full md:w-1/2 h-auto md:h-[100%] mb-4 md:mb-0">
+      <div
+        class="bg-white rounded-lg shadow-xl shadow-black/25 p-3 sm:p-4 h-full"
+      >
+        <h2 class="text-xl mb-3 sm:mb-4 text-purple-800 font-medium">
+          Novo Empréstimo
+        </h2>
+        <form (ngSubmit)="onSubmit()" [formGroup]="emprestimoForm">
+          <!-- Cliente (Autocomplete) -->
+          <div class="mb-3 relative">
+            <label for="client" class="block mb-2">Cliente</label>
+            <input
+              type="text"
+              id="client"
+              formControlName="client"
+              (input)="filterClients($event)"
+              class="w-full p-2 rounded border focus:outline-none focus:ring-2 focus:ring-purple-300"
+              placeholder="Digite o nome ou CPF do cliente"
+            />
+            <!-- Dropdown para resultados do autocomplete -->
+            <div
+              *ngIf="filteredClients.length > 0 && searchTerm"
+              class="absolute z-10 w-full bg-white border border-gray-200 shadow-lg rounded-b-lg max-h-40 overflow-y-auto"
+            >
+              <div
+                *ngFor="let client of filteredClients"
+                (click)="selectClient(client)"
+                class="p-2 hover:bg-gray-100 cursor-pointer"
+              >
+                {{ client.nome }} - {{ client.cpf }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Moeda -->
+          <div class="mb-3">
+            <label for="moeda" class="block mb-2">Moeda</label>
+            <select
+              id="moeda"
+              formControlName="moeda"
+              class="w-full p-2 rounded border focus:outline-none focus:ring-2 focus:ring-purple-300"
+            >
+              <option value="">Selecione uma moeda</option>
+              <option
+                *ngFor="let moeda of moedasDisponiveis"
+                [value]="moeda.simbolo"
+              >
+                {{ moeda.nomeFormatado }} ({{ moeda.simbolo }})
+              </option>
+            </select>
+          </div>
+          <!-- Valor Obtido -->
+          <div class="mb-3">
+            <label for="valorObtido" class="block mb-2"
+              >Valor do Empréstimo
+              <span *ngIf="emprestimoForm.get('moeda')?.value"
+                >(em {{ emprestimoForm.get("moeda")?.value }})</span
+              ></label
+            >
+            <input
+              type="number"
+              id="valorObtido"
+              formControlName="valorObtido"
+              class="w-full p-2 rounded border focus:outline-none focus:ring-2 focus:ring-purple-300"
+              placeholder="Valor na moeda estrangeira"
+              min="1"
+            />
+          </div>
+
+          <!-- Taxa de Conversão -->
+          <div class="mb-3">
+            <label for="taxaConversao" class="block mb-2"
+              >Taxa de Conversão</label
+            >
+            <input
+              type="number"
+              id="taxaConversao"
+              formControlName="taxaConversao"
+              class="w-full p-2 rounded border bg-gray-100 focus:outline-none"
+              placeholder="Taxa de conversão"
+              readonly
+            />
+          </div>
+
+          <!-- Data de Vencimento -->
+          <div class="mb-3">
+            <label for="dataVencimento" class="block mb-2"
+              >Data de Vencimento</label
+            >
+            <input
+              type="date"
+              id="dataVencimento"
+              formControlName="dataVencimento"
+              class="w-full p-2 rounded border focus:outline-none focus:ring-2 focus:ring-purple-300"
+            />
+          </div>
+          <button
+            type="submit"
+            class="bg-purple-600 text-white font-medium py-2 px-4 rounded hover:bg-purple-700 transition-colors"
+          >
+            Cadastrar Empréstimo
+          </button>
+        </form>
+      </div>
+    </div>
+    <!-- Lista de empréstimos (lado direito) -->
+    <div class="w-full md:w-1/2 h-auto md:h-[100%]">
+      <div
+        class="bg-white rounded-lg shadow-xl shadow-black/25 p-3 sm:p-4 h-full flex flex-col"
+      >
+        <h2 class="text-purple-800 font-medium text-xl mb-4">
+          Empréstimos Cadastrados
+        </h2>
+
+        <div class="flex-1 overflow-hidden flex flex-col">
+          <div class="w-full">
+            <table class="w-full table-fixed">
+              <thead class="bg-gray-200 sticky top-0 z-10">
+                <tr class="">
+                  <th class="p-2 text-left font-medium w-3/12">Cliente</th>
+                  <th
+                    class="p-2 text-left font-medium hidden sm:table-cell w-1/12"
+                  >
+                    Moeda
+                  </th>
+                  <th class="p-2 text-left font-medium w-4/12">Valor</th>
+                  <th
+                    class="p-2 text-left font-medium hidden md:table-cell w-2/12"
+                  >
+                    Vencimento
+                  </th>
+                  <th class="p-2 text-center font-medium w-2/12">Ações</th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+          <div class="overflow-y-auto overflow-x-hidden flex-1">
+            <table class="w-full table-fixed">
+              <tbody>
+                <tr
+                  *ngFor="let emprestimo of emprestimos; let i = index"
+                  [ngClass]="i % 2 === 0 ? 'bg-white' : 'bg-gray-100'"
+                  class="border-b hover:bg-gray-50"
+                >
+                  <td class="p-2 w-3/12 truncate max-w-[150px]">
+                    {{ emprestimo.cliente.nome || "N/A" }}
+                    <span class="text-xs text-gray-500 block sm:hidden">
+                      {{ emprestimo.moeda }} -
+                      {{ emprestimo.dataVencimento | date : "dd/MM/yyyy" }}
+                    </span>
+                  </td>
+                  <td class="p-2 hidden sm:table-cell w-1/12">
+                    {{ emprestimo.moeda }}
+                  </td>
+                  <td class="p-2 w-4/12">
+                    <div>
+                      <span class="text-sm font-medium"
+                        >{{ emprestimo.moeda }}
+                        {{ emprestimo.valorObtido | number : "1.2-2" }}</span
+                      >
+                      <span class="text-xs text-gray-500 block">
+                        ≈ R$
+                        {{
+                          emprestimo.valorObtido * emprestimo.taxaConversao
+                            | number : "1.2-2"
+                        }}
+                      </span>
+                    </div>
+                  </td>
+                  <td class="p-2 hidden md:table-cell w-2/12">
+                    {{ emprestimo.dataVencimento | date : "dd/MM/yyyy" }}
+                  </td>
+                  <td class="p-2 w-2/12 text-center">
+                    <button
+                      class="text-red-500 hover:text-red-700 p-1 h-8 w-8 text-center rounded-full hover:bg-red-100"
+                      (click)="deleteEmprestimo(emprestimo)"
+                      title="Excluir"
+                    >
+                      <span class="material-icons text-lg">delete</span>
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="emprestimos.length === 0">
+                  <td colspan="5" class="p-4 text-center text-gray-500">
+                    Nenhum empréstimo cadastrado.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div
+    class="mb-4 p-3 bg-white shadow-lg shadow-black/25 rounded-lg"
+    *ngIf="valorObtido > 0 && taxaConversao > 0"
+  >
+    <p class="text-gray-700 mb-1">
+      <span class="font-medium">Número de meses:</span>
+      {{ numeroMeses }}
+    </p>
+    <p class="text-gray-700 mb-1">
+      <span class="font-medium">Valor em Reais a Receber:</span>
+      R$ {{ valorEmReais | number : "1.2-2" }}
+    </p>
+    <p class="text-gray-700">
+      <span class="font-medium"
+        >Valor a pagar no vencimento ({{
+          emprestimoForm.get("moeda")?.value
+        }}):</span
+      >
+      {{ valorPagar | number : "1.2-2" }}
+    </p>
+  </div>
+</div>

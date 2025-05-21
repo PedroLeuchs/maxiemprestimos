@@ -1,0 +1,30 @@
+<nav
+  class="bg-white text-black shadow-lg shaodw-black h-16 py-2 px-5 flex items-center justify-between"
+>
+  <div class="flex items-center h-full">
+    <img src="/logomaxi.png" alt="Maxi Empréstimos" class="h-full" />
+  </div>
+
+  <div class="flex gap-6 w-11/12">
+    <a
+      routerLink="/clients"
+      routerLinkActive="text-purple-600 border-b-2 border-purple-600 font-medium"
+      class="px-3 py-2 hover:text-purple-600 transition-colors"
+    >
+      Clientes
+    </a>
+    <a
+      routerLink="/emprestimos"
+      routerLinkActive="text-purple-600 border-b-2 border-purple-600 font-medium"
+      class="px-3 py-2 hover:text-purple-600 transition-colors"
+    >
+      Empréstimos
+    </a>
+  </div>
+
+  <div>
+    <!-- Espaço para futuros elementos como botão de login, etc. -->
+  </div>
+</nav>
+<router-outlet></router-outlet>
+<app-notification></app-notification>

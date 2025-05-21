@@ -1,0 +1,160 @@
+<div
+  class="w-full px-2 sm:px-4 py-2 sm:py-4 h-auto sm:h-[55vh] flex flex-col items-start justify-start"
+>
+  <div
+    class="flex flex-col md:flex-row w-full p-2 sm:p-5 justify-between gap-4 sm:gap-10 h-full"
+  >
+    <!-- Formulário de cadastro (lado esquerdo) -->
+    <div class="w-full md:w-1/2 h-auto md:h-[100%] mb-4 md:mb-0">
+      <div class="rounded-lg shadow-xl shadow-black/25 p-3 sm:p-4 h-full">
+        <h2 class="text-xl mb-3 sm:mb-4 text-purple-800 font-medium">
+          {{
+            editingClient
+              ? "Editando Cliente " + editingClient.nome
+              : "Cadastro de Cliente"
+          }}
+        </h2>
+
+        <form (ngSubmit)="onSubmit()" [formGroup]="clientForm">
+          <div class="mb-3">
+            <label for="nome" class="dtext-black block mb-2"
+              >Nome completo</label
+            >
+            <input
+              type="text"
+              id="nome"
+              formControlName="nome"
+              class="w-full p-2 rounded border focus:outline-none focus:ring-2 focus:ring-purple-300"
+              placeholder="Nome do cliente"
+            />
+          </div>
+
+          <div class="mb-3">
+            <label for="cpf" class="dtext-black block mb-2">CPF</label>
+            <input
+              type="text"
+              id="cpf"
+              formControlName="cpf"
+              class="w-full p-2 rounded border focus:outline-none focus:ring-2 focus:ring-purple-300"
+              placeholder="000.000.000-00"
+            />
+          </div>
+
+          <div class="mb-3">
+            <label for="telefone" class="dtext-black block mb-2"
+              >Telefone</label
+            >
+            <input
+              type="tel"
+              id="telefone"
+              formControlName="telefone"
+              class="w-full p-2 rounded border focus:outline-none focus:ring-2 focus:ring-purple-300"
+              placeholder="(00) 00000-0000"
+            />
+          </div>
+
+          <div class="mb-3">
+            <label for="email" class="dtext-black block mb-2">E-mail</label>
+            <input
+              type="email"
+              id="email"
+              formControlName="email"
+              class="w-full p-2 rounded border focus:outline-none focus:ring-2 focus:ring-purple-300"
+              placeholder="cliente@exemplo.com"
+            />
+          </div>
+
+          <div class="flex items-center gap-3 mt-2 w-full justify-between">
+            <button
+              type="submit"
+              class="bg-purple-600 text-white font-medium py-2 px-4 rounded hover:bg-purple-700 transition-colors"
+            >
+              {{ editingClient ? "Atualizar Cliente" : "Cadastrar Cliente" }}
+            </button>
+
+            <button
+              *ngIf="editingClient"
+              type="button"
+              class="bg-red-500 font-medium text-white py-2 px-4 rounded hover:bg-red-600 transition-colors"
+              (click)="cancelEdit()"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Lista de clientes (lado direito) -->
+    <div class="w-full md:w-1/2 h-auto md:h-[100%]">
+      <div
+        class="bg-white rounded-lg shadow-xl shadow-black/25 p-3 sm:p-4 h-full flex flex-col"
+      >
+        <h2 class="text-purple-800 font-medium text-xl mb-3 sm:mb-4">
+          Clientes Cadastrados
+        </h2>
+
+        <div class="flex-1 overflow-hidden flex flex-col">
+          <div class="w-full">
+            <table class="w-full table-fixed">
+              <thead class="bg-gray-200 sticky top-0 z-10">
+                <tr class="">
+                  <th class="p-2 text-left font-medium w-3/12">Nome</th>
+                  <th class="p-2 text-left font-medium w-2/12">CPF</th>
+                  <th class="p-2 text-center font-medium w-2/12">Telefone</th>
+                  <th
+                    class="p-2 text-left font-medium hidden md:table-cell w-3/12"
+                  >
+                    E-mail
+                  </th>
+                  <th class="p-2 text-center font-medium w-2/12">Ações</th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+          <div class="overflow-y-auto overflow-x-hidden flex-1">
+            <table class="w-full table-fixed">
+              <tbody>
+                <tr
+                  *ngFor="let client of clients; let i = index"
+                  [ngClass]="i % 2 === 0 ? 'bg-white' : 'bg-gray-100'"
+                  class="border-b hover:bg-gray-50"
+                >
+                  <td class="p-2 w-3/12 truncate">{{ client.nome }}</td>
+                  <td class="p-2 w-2/12">{{ client.cpf }}</td>
+                  <td class="p-2 w-2/12 text-center">{{ client.telefone }}</td>
+                  <td class="p-2 w-3/12 hidden md:table-cell truncate">
+                    {{ client.email }}
+                  </td>
+                  <td class="p-1 w-2/12">
+                    <div class="flex justify-center gap-2">
+                      <button
+                        class="text-blue-500 hover:text-blue-700 p-1 h-8 w-8 flex items-center justify-center rounded-full hover:bg-blue-100"
+                        (click)="editClient(client)"
+                        title="Editar"
+                      >
+                        <span class="material-icons text-lg">edit</span>
+                      </button>
+                      <button
+                        class="text-red-500 hover:text-red-700 p-1 h-8 w-8 flex items-center justify-center rounded-full hover:bg-red-100"
+                        (click)="deleteClient(client)"
+                        title="Excluir"
+                      >
+                        <span class="material-icons text-lg">delete</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="clients.length === 0">
+                  <td colspan="5" class="p-4 text-center text-gray-500">
+                    Nenhum cliente cadastrado.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

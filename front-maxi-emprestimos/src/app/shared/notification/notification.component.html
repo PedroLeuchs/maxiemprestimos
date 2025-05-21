@@ -1,0 +1,27 @@
+<div class="notification-container space-y-3">
+  <div
+    *ngFor="let notification of notifications"
+    [@notificationAnimation]
+    class="rounded-xl shadow-xl overflow-hidden animate-fade-in-up"
+  >
+    <div
+      [ngClass]="getBackgroundClass(notification.type)"
+      class="flex items-center p-4 gap-3 rounded-xl"
+    >
+      <span [ngClass]="getIconClass(notification.type)" class="text-3xl">
+        {{ getIcon(notification.type) }}
+      </span>
+
+      <div class="flex-1">
+        <p class="text-sm text-gray-800">{{ notification.message }}</p>
+      </div>
+
+      <button
+        class="text-gray-500 hover:text-gray-700 transition"
+        (click)="close(notification.id)"
+      >
+        <span class="material-icons text-xl">close</span>
+      </button>
+    </div>
+  </div>
+</div>
