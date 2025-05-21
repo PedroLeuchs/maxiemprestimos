@@ -30,7 +30,7 @@ O sistema Maxi Empréstimos é uma aplicação completa para gerenciamento de op
 1. Clone o repositório:
 
    ```bash
-   git clone https://github.com/seu-usuario/maxi-emprestimos.git
+   git clone https://github.com/PedroLeuchs/maxiemprestimos.git
    cd maxi-emprestimos
    ```
 
