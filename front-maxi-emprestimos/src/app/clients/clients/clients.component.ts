@@ -12,11 +12,12 @@ import {
   NotificationService,
   NotificationType,
 } from '../../services/notification.service';
+import { ConfirmationModalComponent } from '../../shared/confirmation-modal/confirmation-modal.component';
 
 @Component({
   selector: 'app-clients',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ConfirmationModalComponent],
   templateUrl: './clients.component.html',
   styleUrl: './clients.component.css',
 })
@@ -24,6 +25,12 @@ export class ClientsComponent implements OnInit {
   clientForm!: FormGroup;
   clients: Client[] = [];
   editingClient: Client | null = null;
+
+  // Modal de confirmação
+  showDeleteModal = false;
+  clientToDelete: Client | null = null;
+  modalTitle = 'Confirmar exclusão';
+  modalMessage = 'Tem certeza que deseja excluir este cliente?';
 
   constructor(
     private fb: FormBuilder,
@@ -142,14 +149,37 @@ export class ClientsComponent implements OnInit {
     });
     this.notificationService.info(`Editando cliente: ${client.nome}`);
   }
-
   deleteClient(client: Client): void {
-    this.clientService.deleteClient(client.idCliente!).subscribe(() => {
-      this.loadClients();
-      this.notificationService.success(
-        `Cliente ${client.nome} deletado com sucesso!`
+    this.clientToDelete = client;
+    this.modalMessage = `Tem certeza que deseja excluir o cliente "${client.nome}"?`;
+    this.showDeleteModal = true;
+  }
+
+  confirmDeleteClient(): void {
+    if (this.clientToDelete) {
+      this.clientService.deleteClient(this.clientToDelete.idCliente!).subscribe(
+        () => {
+          this.loadClients();
+          this.notificationService.success(
+            `Cliente ${this.clientToDelete!.nome} deletado com sucesso!`
+          );
+          this.showDeleteModal = false;
+          this.clientToDelete = null;
+        },
+        (error) => {
+          this.notificationService.error(
+            `Erro ao deletar cliente: ${error.message}`
+          );
+          this.showDeleteModal = false;
+          this.clientToDelete = null;
+        }
       );
-    });
+    }
+  }
+
+  cancelDeleteClient(): void {
+    this.showDeleteModal = false;
+    this.clientToDelete = null;
   }
 
   cancelEdit(): void {

@@ -16,6 +16,7 @@ export class CurrencyService {
   getMoedas(): Observable<any> {
     return this.http.get<any>(this.baseUrl);
   }
+
   getCotacaoAtual(moeda: string): Observable<number | null> {
     const hoje = new Date();
     const fim = `${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(

@@ -1,0 +1,124 @@
+<div *ngIf="isVisible" class="modal-backdrop" (click)="closeModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="text-lg font-semibold">Detalhes do Empréstimo</h2>
+      <button class="close-button" (click)="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" *ngIf="emprestimo">
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">
+          Informações Gerais
+        </h3>
+        <div class="details-grid">
+          <div class="detail-item">
+            <div class="detail-label">Cliente</div>
+            <div class="detail-value">{{ emprestimo.cliente.nome }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">CPF</div>
+            <div class="detail-value">{{ emprestimo.cliente.cpf }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Data de Vencimento</div>
+            <div class="detail-value">
+              {{ emprestimo.dataVencimento | date : "dd/MM/yyyy" }}
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Prazo</div>
+            <div class="detail-value">{{ emprestimo.numeroMeses }} meses</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">
+          Valores e Taxas
+        </h3>
+        <div class="details-grid">
+          <div class="detail-item">
+            <div class="detail-label">Moeda</div>
+            <div class="detail-value">{{ emprestimo.moeda }}</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Cotação</div>
+            <div class="detail-value">
+              R$ {{ emprestimo.taxaConversao | number : "1.4-4" }}
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Valor do Empréstimo</div>
+            <div class="detail-value">
+              {{ emprestimo.moeda }}
+              {{ emprestimo.valorObtido | number : "1.2-2" }}
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Valor a Pagar</div>
+            <div class="detail-value">
+              {{ emprestimo.moeda }}
+              {{ emprestimo.valorPagar | number : "1.2-2" }}
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Taxa de IOF</div>
+            <div class="detail-value">
+              {{ (emprestimo.taxaIOF || 0.035) * 100 }}%
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Juros Total</div>
+            <div class="detail-value">
+              {{ calcularPorcentagemJurosTotais() | number : "1.2-2" }}%
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-2">
+          Valores em Reais
+        </h3>
+        <div class="details-grid">
+          <div class="detail-item">
+            <div class="detail-label">Valor Bruto em Reais</div>
+            <div class="detail-value">
+              R$
+              {{
+                emprestimo.valorObtido * emprestimo.taxaConversao
+                  | number : "1.2-2"
+              }}
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Valor do IOF</div>
+            <div class="detail-value">
+              R$ {{ calcularValorIOF() | number : "1.2-2" }}
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Valor Líquido em Reais</div>
+            <div class="detail-value">
+              R$ {{ calcularValorLiquidoReais() | number : "1.2-2" }}
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Valor a Pagar em Reais no Vencimento</div>
+            <div class="detail-value">
+              R$ {{ calcularValorPagarReais() | number : "1.2-2" }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end mt-4">
+        <button
+          (click)="closeModal()"
+          class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+        >
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

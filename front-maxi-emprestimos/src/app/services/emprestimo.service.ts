@@ -17,6 +17,7 @@ export interface Emprestimo {
   dataVencimento: string;
   valorPagar: number;
   numeroMeses: number;
+  taxaIOF?: number;
 }
 
 @Injectable({

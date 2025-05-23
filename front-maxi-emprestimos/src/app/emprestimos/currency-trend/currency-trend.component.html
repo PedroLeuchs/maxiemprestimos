@@ -1,0 +1,72 @@
+<div class="currency-trend-container">
+  <h3 class="text-sm font-medium text-gray-700 mb-1">
+    Tendência de Cotação ({{ moeda }})
+  </h3>
+
+  <div *ngIf="isLoading" class="trend-loading">
+    <p>Carregando dados...</p>
+  </div>
+
+  <div *ngIf="error" class="trend-error">
+    <p>{{ error }}</p>
+  </div>
+  <div *ngIf="!isLoading && !error && cotacoes.length > 0" class="trend-chart">
+    <div class="trend-line">
+      <!-- Pontos no gráfico -->
+      <div
+        *ngFor="let cotacao of cotacoes; let i = index"
+        class="trend-point"
+        [style.left]="
+          cotacoes.length > 1 ? (i / (cotacoes.length - 1)) * 100 + '%' : '50%'
+        "
+        [style.top]="calcularPosicaoY(cotacao.valor) + '%'"
+        [title]="cotacao.data + ': R$ ' + cotacao.valor.toFixed(4)"
+      ></div>
+
+      <!-- Linha de conexão (simplificada) -->
+      <svg
+        class="trend-line-path"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+      >
+        <polyline
+          *ngIf="cotacoes.length > 1"
+          [attr.points]="gerarPontosPolyline()"
+          fill="none"
+          stroke="#7e3af2"
+          stroke-width="1.5"
+        />
+      </svg>
+    </div>
+  </div>
+  <div *ngIf="!isLoading && !error" class="trend-indicator">
+    <ng-container [ngSwitch]="tendencia">
+      <ng-container *ngSwitchCase="'alta'">
+        <i class="material-icons trend-indicator-alta">arrow_upward</i>
+        <span class="text-sm trend-indicator-alta">Em alta</span>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="'baixa'">
+        <i class="material-icons trend-indicator-baixa">arrow_downward</i>
+        <span class="text-sm trend-indicator-baixa">Em queda</span>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="'estavel'">
+        <i class="material-icons trend-indicator-estavel">arrow_forward</i>
+        <span class="text-sm trend-indicator-estavel">Estável</span>
+      </ng-container>
+
+      <ng-container *ngSwitchDefault>
+        <i class="material-icons">help_outline</i>
+        <span class="text-sm">Sem dados suficientes</span>
+      </ng-container>
+    </ng-container>
+  </div>
+  <div
+    *ngIf="!isLoading && !error && cotacoes.length > 0"
+    class="text-xs text-gray-500 mt-1"
+  >
+    Últimos 30 dias | Última: R$
+    {{ obterUltimaCotacao() }}
+  </div>
+</div>
