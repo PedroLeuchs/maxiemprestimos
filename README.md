@@ -16,21 +16,14 @@ O sistema Maxi Empréstimos é uma aplicação completa para gerenciamento de op
 - Registro e controle de empréstimos
 - Cálculo de juros e parcelas
 
-## Requisitos de Sistema
-
-- [Docker](https://www.docker.com/get-started) e Docker Compose
-- [Java 17+](https://adoptium.net/) (para desenvolvimento local do backend)
-- [Node.js 18+](https://nodejs.org/) e NPM (para desenvolvimento local do frontend)
-- [Angular CLI](https://angular.io/cli) (para desenvolvimento local do frontend)
-
 ## Configuração e Execução
 
-### Usando Docker Compose (Recomendado)
+### Docker Compose
 
 1. Clone o repositório:
 
    ```bash
-   git clone https://github.com/seu-usuario/maxi-emprestimos.git
+   git clone https://github.com/PedroLeuchs/maxiemprestimos.git
    cd maxi-emprestimos
    ```
 
@@ -44,39 +37,6 @@ O sistema Maxi Empréstimos é uma aplicação completa para gerenciamento de op
    - Frontend: http://localhost:80
    - Backend API: http://localhost:8080
    - Banco de dados: localhost:5432 (PostgreSQL)
-
-### Desenvolvimento Local
-
-#### Backend (Spring Boot)
-
-1. Configure o PostgreSQL local ou via Docker:
-
-   ```bash
-   docker run --name postgres -e POSTGRES_PASSWORD=admin -e POSTGRES_USER=postgres -e POSTGRES_DB=emprestimos_db -p 5432:5432 -d postgres:latest
-   ```
-
-2. Execute o backend:
-   ```bash
-   cd maxiemprestimos
-   ./gradlew bootRun
-   ```
-
-#### Frontend (Angular)
-
-1. Instale as dependências:
-
-   ```bash
-   cd front-maxi-emprestimos
-   npm install
-   ```
-
-2. Execute a aplicação em modo de desenvolvimento:
-
-   ```bash
-   npm start
-   ```
-
-3. Acesse http://localhost:4200 no navegador
 
 ## Estrutura do Projeto
 
@@ -103,32 +63,8 @@ O sistema utiliza PostgreSQL com as seguintes configurações padrão:
 - **Database**: emprestimos_db
 - **Usuário**: postgres
 - **Senha**: admin
-- **Host**: localhost (desenvolvimento local) ou postgres (via Docker Compose)
+- **Host**: postgres (via Docker Compose)
 - **Porta**: 5432
 
 As tabelas são criadas automaticamente pelo Hibernate (`spring.jpa.hibernate.ddl-auto=update`).
 
-## Desenvolvimento
-
-### Comandos úteis
-
-Backend:
-
-```bash
-./gradlew build      # Compilar o projeto
-./gradlew test       # Executar testes
-./gradlew bootJar    # Gerar JAR executável
-```
-
-Frontend:
-
-```bash
-ng build                 # Compilar o projeto
-ng test                  # Executar testes
-ng generate component    # Gerar novo componente
-ng serve --port 4201     # Executar em porta alternativa
-```
-
-## Licença
-
-Este projeto é licenciado sob a [Licença MIT](LICENSE).
