@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -13,11 +13,23 @@ import {
   NotificationType,
 } from '../../services/notification.service';
 import { ConfirmationModalComponent } from '../../shared/confirmation-modal/confirmation-modal.component';
+import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 
 @Component({
   selector: 'app-clients',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ConfirmationModalComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    ConfirmationModalComponent,
+    NgxMaskDirective,
+  ],
+  providers: [
+    provideNgxMask({
+      validation: false,
+      dropSpecialCharacters: false,
+    }),
+  ],
   templateUrl: './clients.component.html',
   styleUrl: './clients.component.css',
 })
@@ -46,11 +58,41 @@ export class ClientsComponent implements OnInit {
 
   initForm(): void {
     this.clientForm = this.fb.group({
-      nome: ['', [Validators.required, Validators.minLength(3)]],
-      cpf: ['', [Validators.required]],
-      telefone: ['', [Validators.required]],
-      email: ['', [Validators.required, Validators.email]],
+      nome: [
+        '',
+        [Validators.required, Validators.minLength(3), this.naoComecaComNumero],
+      ],
+      cpf: [
+        '',
+        [
+          Validators.required,
+          // Validação mais flexível para CPF (com ou sem pontos e traços)
+          Validators.minLength(11),
+        ],
+      ],
+      telefone: [
+        '',
+        [
+          Validators.required,
+          // Validação mais flexível para telefone
+          Validators.minLength(10),
+        ],
+      ],
+      email: [
+        '',
+        [Validators.required, Validators.email, this.naoComecaComNumero],
+      ],
     });
+  }
+
+  // Validador personalizado para garantir que o valor não comece com número
+  naoComecaComNumero(control: {
+    value: string;
+  }): { [key: string]: boolean } | null {
+    if (!control.value) return null;
+
+    const comecaComNumero = /^[0-9]/.test(control.value);
+    return comecaComNumero ? { comecaComNumero: true } : null;
   }
 
   loadClients(): void {
@@ -98,7 +140,33 @@ export class ClientsComponent implements OnInit {
       return;
     }
 
-    const formValue = this.clientForm.value;
+    // Obtenha os valores do formulário e garanta que os formatos estejam corretos
+    const formValue = { ...this.clientForm.value };
+
+    // Se o formato não estiver de acordo com a máscara, formate-o
+    if (formValue.cpf) {
+      const cpfNormalizado = this.normalizeCpf(formValue.cpf);
+      if (cpfNormalizado.length === 11) {
+        formValue.cpf = `${cpfNormalizado.substring(
+          0,
+          3
+        )}.${cpfNormalizado.substring(3, 6)}.${cpfNormalizado.substring(
+          6,
+          9
+        )}-${cpfNormalizado.substring(9, 11)}`;
+      }
+    }
+
+    // Formatação do telefone se necessário
+    if (formValue.telefone) {
+      const telNormalizado = this.normalizeTelefone(formValue.telefone);
+      if (telNormalizado.length >= 10) {
+        formValue.telefone = `(${telNormalizado.substring(
+          0,
+          2
+        )}) ${telNormalizado.substring(2, 7)}-${telNormalizado.substring(7)}`;
+      }
+    }
 
     if (this.editingClient) {
       const updatedClient: Client = {
@@ -141,14 +209,34 @@ export class ClientsComponent implements OnInit {
 
   editClient(client: Client): void {
     this.editingClient = client;
+
+    // Garantir que os dados do cliente estejam no formato correto para a edição
+    const cpfFormatado =
+      client.cpf && !client.cpf.includes('.')
+        ? `${client.cpf.substring(0, 3)}.${client.cpf.substring(
+            3,
+            6
+          )}.${client.cpf.substring(6, 9)}-${client.cpf.substring(9, 11)}`
+        : client.cpf;
+
+    const telefoneFormatado =
+      client.telefone && !client.telefone.includes('(')
+        ? `(${client.telefone.substring(0, 2)}) ${client.telefone.substring(
+            2,
+            7
+          )}-${client.telefone.substring(7)}`
+        : client.telefone;
+
     this.clientForm.patchValue({
       nome: client.nome,
-      cpf: client.cpf,
-      telefone: client.telefone,
+      cpf: cpfFormatado,
+      telefone: telefoneFormatado,
       email: client.email,
     });
+
     this.notificationService.info(`Editando cliente: ${client.nome}`);
   }
+
   deleteClient(client: Client): void {
     this.clientToDelete = client;
     this.modalMessage = `Tem certeza que deseja excluir o cliente "${client.nome}"?`;
@@ -180,6 +268,16 @@ export class ClientsComponent implements OnInit {
   cancelDeleteClient(): void {
     this.showDeleteModal = false;
     this.clientToDelete = null;
+  }
+
+  // Método para normalizar CPF (remover caracteres especiais)
+  normalizeCpf(cpf: string): string {
+    return cpf ? cpf.replace(/\D/g, '') : '';
+  }
+
+  // Método para normalizar telefone (remover caracteres especiais)
+  normalizeTelefone(telefone: string): string {
+    return telefone ? telefone.replace(/\D/g, '') : '';
   }
 
   cancelEdit(): void {

@@ -6,6 +6,8 @@ import {
   FormGroup,
   Validators,
   ReactiveFormsModule,
+  AbstractControl,
+  ValidationErrors,
 } from '@angular/forms';
 import { ClientService, Client } from '../../services/client.service';
 import {
@@ -16,6 +18,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { NotificationService } from '../../services/notification.service';
 import { ConfirmationModalComponent } from '../../shared/confirmation-modal/confirmation-modal.component';
 import { EmprestimoDetailsModalComponent } from '../emprestimo-details-modal/emprestimo-details-modal.component';
+import { NgxMaskDirective, provideNgxMask } from 'ngx-mask';
 
 @Component({
   selector: 'app-emprestimos',
@@ -26,6 +29,13 @@ import { EmprestimoDetailsModalComponent } from '../emprestimo-details-modal/emp
     HttpClientModule,
     ConfirmationModalComponent,
     EmprestimoDetailsModalComponent,
+    NgxMaskDirective,
+  ],
+  providers: [
+    provideNgxMask({
+      validation: false,
+      dropSpecialCharacters: false,
+    }),
   ],
   templateUrl: './emprestimos.component.html',
   styleUrl: './emprestimos.component.css',
@@ -54,7 +64,9 @@ export class EmprestimosComponent implements OnInit {
   valorIOFReais: number = 0; // Valor do IOF em reais
   taxaJuros = 0.015;
   taxaIOF = 0.035; // Taxa fixa de IOF de 3,5%
-
+  mostrarFiltros = true;
+  isMouseOverClientList = false;
+  dropdownAberto = false;
   // Propriedades para o modal de confirmação
   showDeleteModal = false;
   emprestimoToDelete: Emprestimo | null = null;
@@ -64,6 +76,10 @@ export class EmprestimosComponent implements OnInit {
   // Propriedades para o modal de detalhes
   showDetailsModal = false;
   emprestimoDetails: Emprestimo | null = null;
+
+  // Propriedades para edição de empréstimos
+  isEditMode = false;
+  emprestimoToEdit: Emprestimo | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -99,6 +115,38 @@ export class EmprestimosComponent implements OnInit {
     this.filtroForm.valueChanges.subscribe(() => {
       this.aplicarFiltros();
     });
+  }
+
+  // Validador customizado para data futura
+  futureDateValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.value) {
+      return null; // Se não há valor, não valida (deixa para o required)
+    }
+
+    const inputDate = new Date(control.value);
+    const today = new Date();
+
+    // Zera as horas para comparar apenas as datas
+    today.setHours(0, 0, 0, 0);
+    inputDate.setHours(0, 0, 0, 0);
+
+    if (inputDate <= today) {
+      return {
+        futureDate: {
+          message: 'A data de vencimento deve ser futura',
+          actualDate: control.value,
+          minDate: new Date(today.getTime() + 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split('T')[0], // Amanhã
+        },
+      };
+    }
+
+    return null;
+  }
+
+  alternarFiltros() {
+    this.mostrarFiltros = !this.mostrarFiltros;
   }
 
   // Inicializar o formulário de filtro
@@ -227,12 +275,25 @@ export class EmprestimosComponent implements OnInit {
 
   initForm(): void {
     this.emprestimoForm = this.fb.group({
-      client: ['', Validators.required],
-      moeda: ['', Validators.required],
-      valorObtido: [null, [Validators.required, Validators.min(1)]],
-      taxaConversao: [{ value: 5.0, disabled: true }],
-      dataVencimento: ['', Validators.required],
+      client: this.fb.control('', Validators.required),
+      moeda: this.fb.control('', Validators.required),
+      valorObtido: this.fb.control('', [
+        Validators.required,
+        Validators.min(0.01),
+      ]),
+      taxaConversao: this.fb.control('', Validators.required),
+      dataVencimento: this.fb.control('', [
+        Validators.required,
+        this.futureDateValidator,
+      ]),
     });
+  }
+
+  private parseDecimalBR(value: string | number): number {
+    if (typeof value === 'string') {
+      return parseFloat(value.replace('.', '').replace(',', '.')) || 0;
+    }
+    return value || 0;
   }
 
   loadClients(): void {
@@ -266,18 +327,58 @@ export class EmprestimosComponent implements OnInit {
     );
   }
 
+  onClientInputFocus(): void {
+    // Mostra todos os clientes apenas se o campo estiver vazio
+    if (!this.searchTerm) {
+      this.filteredClients = [...this.clients];
+    }
+  }
+
+  onClientInputBlur(): void {
+    // Delay para permitir clique no item da lista
+    setTimeout(() => {
+      if (!this.isMouseOverClientList) {
+        this.filteredClients = [];
+      }
+    }, 200);
+  }
+
   selectClient(client: Client): void {
     this.selectedClient = client;
     this.emprestimoForm.patchValue({
       client: `${client.nome} - ${client.cpf}`,
     });
     this.filteredClients = [];
+    this.searchTerm = '';
     this.notificationService.info(`Cliente selecionado: ${client.nome}`);
   }
+
+  // Novo método para limpar a seleção do cliente
+  clearClientSelection(): void {
+    this.selectedClient = null;
+    this.emprestimoForm.patchValue({
+      client: '',
+    });
+    this.filteredClients = [];
+    this.searchTerm = '';
+    this.notificationService.info('Seleção de cliente removida');
+  }
   calcularValores(): void {
-    const valorFormulario = this.emprestimoForm.get('valorObtido')?.value;
+    let valorFormulario = this.emprestimoForm.get('valorObtido')?.value;
     const dataVencimento = this.emprestimoForm.get('dataVencimento')?.value;
-    const taxaConversaoAtual = this.emprestimoForm.get('taxaConversao')?.value;
+    let taxaConversaoAtual = this.emprestimoForm.get('taxaConversao')?.value;
+
+    // Converter valores com vírgula para formato com ponto (para cálculos)
+    if (typeof valorFormulario === 'string' && valorFormulario.includes(',')) {
+      valorFormulario = parseFloat(valorFormulario.replace(',', '.'));
+    }
+
+    if (
+      typeof taxaConversaoAtual === 'string' &&
+      taxaConversaoAtual.includes(',')
+    ) {
+      taxaConversaoAtual = parseFloat(taxaConversaoAtual.replace(',', '.'));
+    }
 
     this.valorObtido = valorFormulario || 0;
     this.taxaConversao = taxaConversaoAtual || 0;
@@ -312,33 +413,43 @@ export class EmprestimosComponent implements OnInit {
     // Valor total em reais (com IOF)
     this.valorEmReais = valorBaseReais - this.valorIOFReais;
   }
-
   onSubmit(): void {
     if (this.emprestimoForm.invalid || !this.selectedClient) {
-      const missingFields: string[] = [];
-
+      const errorMessages: string[] = [];
       const controls = this.emprestimoForm.controls;
 
       if (controls['client'].invalid) {
-        missingFields.push('cliente');
+        errorMessages.push('Cliente é obrigatório');
       }
       if (controls['moeda'].invalid) {
-        missingFields.push('moeda');
+        errorMessages.push('Moeda é obrigatória');
       }
       if (controls['valorObtido'].invalid) {
-        missingFields.push('valorObtido');
+        if (controls['valorObtido'].errors?.['required']) {
+          errorMessages.push('Valor obtido é obrigatório');
+        } else if (controls['valorObtido'].errors?.['min']) {
+          errorMessages.push('Valor obtido deve ser maior que zero');
+        }
       }
       if (controls['dataVencimento'].invalid) {
-        missingFields.push('dataVencimento');
+        const dataVencimentoErrors = controls['dataVencimento'].errors;
+        if (dataVencimentoErrors?.['required']) {
+          errorMessages.push('Data de vencimento é obrigatória');
+        } else if (dataVencimentoErrors?.['futureDate']) {
+          errorMessages.push('A data de vencimento deve ser futura');
+        }
+      }
+      if (controls['taxaConversao'].invalid) {
+        errorMessages.push('Taxa de conversão é obrigatória');
       }
       if (!this.selectedClient) {
-        missingFields.push('seleção do cliente');
+        errorMessages.push('É necessário selecionar um cliente');
       }
 
       this.notificationService.error(
-        `Não foi possível cadastrar o empréstimo: ${missingFields.join(', ')} ${
-          missingFields.length === 1 ? 'é' : 'são'
-        } obrigatório${missingFields.length === 1 ? '' : 's'}.`
+        `Não foi possível ${
+          this.isEditMode ? 'atualizar' : 'cadastrar'
+        } o empréstimo:\n${errorMessages.join('\n• ')}`
       );
       return;
     }
@@ -348,45 +459,88 @@ export class EmprestimosComponent implements OnInit {
       .toISOString()
       .split('T')[0];
 
-    const taxaConversaoAtual =
-      this.emprestimoForm.get('taxaConversao')?.value || 5.0;
-    const novoEmprestimo: Emprestimo = {
-      cliente: {
-        idCliente: this.selectedClient.idCliente!,
-        nome: this.selectedClient.nome,
-        cpf: this.selectedClient.cpf,
-      },
-      moeda: formValue.moeda,
-      valorObtido: formValue.valorObtido,
-      taxaConversao: taxaConversaoAtual,
-      dataVencimento: dataFormatada,
-      valorPagar: this.valorPagar,
-      numeroMeses: this.numeroMeses,
-      taxaIOF: this.taxaIOF, // Adicionando taxa de IOF
-    };
+    const valorObtidoFormatado = this.parseDecimalBR(formValue.valorObtido);
+    const taxaConversaoAtual = this.parseDecimalBR(formValue.taxaConversao);
 
-    this.emprestimoService.addEmprestimo(novoEmprestimo).subscribe(
-      () => {
-        this.loadEmprestimos();
-        this.emprestimoForm.reset();
-        this.selectedClient = null;
-        this.numeroMeses = 0;
-        this.valorPagar = 0;
-        this.valorPagarReais = 0;
-        this.valorObtido = 0;
-        this.taxaConversao = 0;
-        this.valorEmReais = 0;
-        this.valorIOFReais = 0;
-        this.notificationService.success(
-          `Empréstimo para ${novoEmprestimo.cliente.nome} cadastrado com sucesso!`
-        );
-      },
-      (error) => {
-        this.notificationService.error(
-          `Erro ao cadastrar empréstimo: ${error.message}`
-        );
-      }
-    );
+    if (this.isEditMode && this.emprestimoToEdit) {
+      // Modo de edição
+      const emprestimoAtualizado: Emprestimo = {
+        idEmprestimo: this.emprestimoToEdit.idEmprestimo,
+        cliente: {
+          idCliente: this.selectedClient.idCliente!,
+          nome: this.selectedClient.nome,
+          cpf: this.selectedClient.cpf,
+        },
+        moeda: formValue.moeda,
+        valorObtido: valorObtidoFormatado,
+        taxaConversao: taxaConversaoAtual,
+        dataVencimento: dataFormatada,
+        valorPagar: this.valorPagar,
+        numeroMeses: this.numeroMeses,
+        taxaIOF: this.taxaIOF,
+      };
+
+      this.emprestimoService.updateEmprestimo(emprestimoAtualizado).subscribe(
+        () => {
+          this.loadEmprestimos();
+          this.resetForm();
+          this.notificationService.success(
+            `Empréstimo para ${emprestimoAtualizado.cliente.nome} atualizado com sucesso!`
+          );
+        },
+        (error) => {
+          this.notificationService.error(
+            `Erro ao atualizar empréstimo: ${error.message}`
+          );
+        }
+      );
+    } else {
+      // Modo de criação
+      const novoEmprestimo: Emprestimo = {
+        cliente: {
+          idCliente: this.selectedClient.idCliente!,
+          nome: this.selectedClient.nome,
+          cpf: this.selectedClient.cpf,
+        },
+        moeda: formValue.moeda,
+        valorObtido: valorObtidoFormatado,
+        taxaConversao: taxaConversaoAtual,
+        dataVencimento: dataFormatada,
+        valorPagar: this.valorPagar,
+        numeroMeses: this.numeroMeses,
+        taxaIOF: this.taxaIOF,
+      };
+
+      this.emprestimoService.addEmprestimo(novoEmprestimo).subscribe(
+        () => {
+          this.loadEmprestimos();
+          this.resetForm();
+          this.notificationService.success(
+            `Empréstimo para ${novoEmprestimo.cliente.nome} cadastrado com sucesso!`
+          );
+        },
+        (error) => {
+          this.notificationService.error(
+            `Erro ao cadastrar empréstimo: ${error.message}`
+          );
+        }
+      );
+    }
+  }
+
+  // Método para resetar o formulário e os valores relacionados
+  resetForm(): void {
+    this.emprestimoForm.reset();
+    this.selectedClient = null;
+    this.isEditMode = false;
+    this.emprestimoToEdit = null;
+    this.numeroMeses = 0;
+    this.valorPagar = 0;
+    this.valorPagarReais = 0;
+    this.valorObtido = 0;
+    this.taxaConversao = 0;
+    this.valorEmReais = 0;
+    this.valorIOFReais = 0;
   }
 
   openDeleteModal(emprestimo: Emprestimo): void {
@@ -405,6 +559,7 @@ export class EmprestimosComponent implements OnInit {
     }
     this.closeDeleteModal();
   }
+
   deleteEmprestimo(emprestimo: Emprestimo): void {
     this.emprestimoToDelete = emprestimo;
     this.modalMessage = `Tem certeza que deseja excluir o empréstimo para "${emprestimo.cliente.nome}"?`;
@@ -540,5 +695,54 @@ export class EmprestimosComponent implements OnInit {
     document.body.removeChild(link);
 
     this.notificationService.success('Arquivo CSV exportado com sucesso!');
+  }
+
+  onClientListMouseEnter(): void {
+    this.isMouseOverClientList = true;
+  }
+
+  onClientListMouseLeave(): void {
+    this.isMouseOverClientList = false;
+  }
+  // Métodos para edição de empréstimos
+  editEmprestimo(emprestimo: Emprestimo): void {
+    this.isEditMode = true;
+    this.emprestimoToEdit = { ...emprestimo };
+
+    // Buscar o cliente completo
+    this.clientService.getClientById(emprestimo.cliente.idCliente).subscribe(
+      (client) => {
+        this.selectedClient = client;
+
+        // Preencher o formulário com os dados do empréstimo
+        this.emprestimoForm.patchValue({
+          client: `${client.nome} - ${client.cpf}`,
+          moeda: emprestimo.moeda,
+          valorObtido: emprestimo.valorObtido.toString().replace('.', ','),
+          taxaConversao: emprestimo.taxaConversao.toString().replace('.', ','),
+          dataVencimento: emprestimo.dataVencimento,
+        });
+
+        // Calcular valores para exibição
+        this.calcularValores();
+
+        this.notificationService.info(
+          `Editando empréstimo para ${client.nome}`
+        );
+      },
+      (error) => {
+        this.notificationService.error(
+          `Erro ao carregar dados do cliente: ${error.message}`
+        );
+      }
+    );
+  }
+
+  cancelEdit(): void {
+    this.isEditMode = false;
+    this.emprestimoToEdit = null;
+    this.emprestimoForm.reset();
+    this.selectedClient = null;
+    this.notificationService.info('Edição cancelada');
   }
 }

@@ -31,10 +31,33 @@
                 id="nome"
                 formControlName="nome"
                 class="w-full p-2 rounded border focus:outline-none focus:ring-2 focus:ring-purple-300"
+                [ngClass]="{
+                  'border-red-500':
+                    clientForm.get('nome')?.invalid &&
+                    clientForm.get('nome')?.touched
+                }"
                 placeholder="Nome do cliente"
               />
+              <div
+                *ngIf="
+                  clientForm.get('nome')?.invalid &&
+                  clientForm.get('nome')?.touched
+                "
+                class="text-red-500 text-xs mt-1"
+              >
+                <div *ngIf="clientForm.get('nome')?.errors?.['required']">
+                  Nome é obrigatório
+                </div>
+                <div *ngIf="clientForm.get('nome')?.errors?.['minlength']">
+                  Nome deve ter pelo menos 3 caracteres
+                </div>
+                <div
+                  *ngIf="clientForm.get('nome')?.errors?.['comecaComNumero']"
+                >
+                  Nome não pode começar com número
+                </div>
+              </div>
             </div>
-
             <div class="">
               <label for="cpf" class="dtext-black block mb-2">CPF</label>
               <input
@@ -42,8 +65,29 @@
                 id="cpf"
                 formControlName="cpf"
                 class="w-full p-2 rounded border focus:outline-none focus:ring-2 focus:ring-purple-300"
+                [ngClass]="{
+                  'border-red-500':
+                    clientForm.get('cpf')?.invalid &&
+                    clientForm.get('cpf')?.touched
+                }"
                 placeholder="000.000.000-00"
+                mask="000.000.000-00"
+                [dropSpecialCharacters]="false"
               />
+              <div
+                *ngIf="
+                  clientForm.get('cpf')?.invalid &&
+                  clientForm.get('cpf')?.touched
+                "
+                class="text-red-500 text-xs mt-1"
+              >
+                <div *ngIf="clientForm.get('cpf')?.errors?.['required']">
+                  CPF é obrigatório
+                </div>
+                <div *ngIf="clientForm.get('cpf')?.errors?.['minlength']">
+                  CPF deve ter pelo menos 11 dígitos
+                </div>
+              </div>
             </div>
 
             <div class="">
@@ -55,10 +99,30 @@
                 id="telefone"
                 formControlName="telefone"
                 class="w-full p-2 rounded border focus:outline-none focus:ring-2 focus:ring-purple-300"
+                [ngClass]="{
+                  'border-red-500':
+                    clientForm.get('telefone')?.invalid &&
+                    clientForm.get('telefone')?.touched
+                }"
                 placeholder="(00) 00000-0000"
+                mask="(00) 00000-0000"
+                [dropSpecialCharacters]="false"
               />
+              <div
+                *ngIf="
+                  clientForm.get('telefone')?.invalid &&
+                  clientForm.get('telefone')?.touched
+                "
+                class="text-red-500 text-xs mt-1"
+              >
+                <div *ngIf="clientForm.get('telefone')?.errors?.['required']">
+                  Telefone é obrigatório
+                </div>
+                <div *ngIf="clientForm.get('telefone')?.errors?.['minlength']">
+                  Telefone deve ter pelo menos 10 dígitos
+                </div>
+              </div>
             </div>
-
             <div class="">
               <label for="email" class="dtext-black block mb-2">E-mail</label>
               <input
@@ -66,8 +130,32 @@
                 id="email"
                 formControlName="email"
                 class="w-full p-2 rounded border focus:outline-none focus:ring-2 focus:ring-purple-300"
+                [ngClass]="{
+                  'border-red-500':
+                    clientForm.get('email')?.invalid &&
+                    clientForm.get('email')?.touched
+                }"
                 placeholder="cliente@exemplo.com"
               />
+              <div
+                *ngIf="
+                  clientForm.get('email')?.invalid &&
+                  clientForm.get('email')?.touched
+                "
+                class="text-red-500 text-xs mt-1"
+              >
+                <div *ngIf="clientForm.get('email')?.errors?.['required']">
+                  E-mail é obrigatório
+                </div>
+                <div *ngIf="clientForm.get('email')?.errors?.['email']">
+                  Formato de e-mail inválido
+                </div>
+                <div
+                  *ngIf="clientForm.get('email')?.errors?.['comecaComNumero']"
+                >
+                  E-mail não pode começar com número
+                </div>
+              </div>
             </div>
           </div>
           <div class="flex items-center w-full justify-between h-auto">
@@ -81,7 +169,7 @@
             <button
               *ngIf="editingClient"
               type="button"
-              class="bg-red-500 font-medium text-white py-2 px-4 rounded hover:bg-red-600 transition-colors"
+              class="bg-gray-500 font-medium text-white py-2 px-4 rounded hover:bg-gray-600 transition-colors"
               (click)="cancelEdit()"
             >
               Cancelar
@@ -99,65 +187,68 @@
         <h2 class="text-purple-800 font-medium text-xl mb-3 sm:mb-4">
           Clientes Cadastrados
         </h2>
-
         <div class="flex-1 overflow-hidden flex flex-col">
-          <div class="w-full">
-            <table class="w-full table-fixed">
-              <thead class="bg-gray-200 sticky top-0 z-10">
-                <tr class="">
-                  <th class="p-2 text-left font-medium w-3/12">Nome</th>
-                  <th class="p-2 text-left font-medium w-2/12">CPF</th>
-                  <th class="p-2 text-center font-medium w-2/12">Telefone</th>
-                  <th
-                    class="p-2 text-left font-medium hidden md:table-cell w-3/12"
-                  >
-                    E-mail
-                  </th>
-                  <th class="p-2 text-center font-medium w-2/12">Ações</th>
-                </tr>
-              </thead>
-            </table>
-          </div>
-          <div class="overflow-y-auto overflow-x-hidden flex-1">
-            <table class="w-full table-fixed">
-              <tbody>
-                <tr
-                  *ngFor="let client of clients; let i = index"
-                  [ngClass]="i % 2 === 0 ? 'bg-white' : 'bg-gray-100'"
-                  class="border-b hover:bg-gray-50"
-                >
-                  <td class="p-2 w-3/12 truncate">{{ client.nome }}</td>
-                  <td class="p-2 w-2/12">{{ client.cpf }}</td>
-                  <td class="p-2 w-2/12 text-center">{{ client.telefone }}</td>
-                  <td class="p-2 w-3/12 hidden md:table-cell truncate">
-                    {{ client.email }}
-                  </td>
-                  <td class="p-1 w-2/12">
-                    <div class="flex justify-center gap-2">
-                      <button
-                        class="text-blue-500 hover:text-blue-700 p-1 h-8 w-8 flex items-center justify-center rounded-full hover:bg-blue-100"
-                        (click)="editClient(client)"
-                        title="Editar"
-                      >
-                        <span class="material-icons text-lg">edit</span>
-                      </button>
-                      <button
-                        class="text-red-500 hover:text-red-700 p-1 h-8 w-8 flex items-center justify-center rounded-full hover:bg-red-100"
-                        (click)="deleteClient(client)"
-                        title="Excluir"
-                      >
-                        <span class="material-icons text-lg">delete</span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <tr *ngIf="clients.length === 0">
-                  <td colspan="5" class="p-4 text-center text-gray-500">
-                    Nenhum cliente cadastrado.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <!-- Container com responsividade para scroll horizontal em dispositivos pequenos -->
+          <div class="w-full overflow-x-auto">
+            <div class="lg:min-w-[600px] min-w-[1000px]">
+              <div class="w-full">
+                <table class="w-full table-fixed">
+                  <thead class="bg-gray-200 sticky top-0 z-10">
+                    <tr class="">
+                      <th class="p-2 text-left font-medium w-3/12">Nome</th>
+                      <th class="p-2 text-left font-medium w-2/12">CPF</th>
+                      <th class="p-2 text-left font-medium w-2/12">Telefone</th>
+                      <th class="p-2 text-left font-medium w-3/12">E-mail</th>
+                      <th class="p-2 text-center font-medium w-2/12">Ações</th>
+                    </tr>
+                  </thead>
+                </table>
+              </div>
+              <div
+                class="overflow-y-auto flex-1"
+                style="max-height: calc(100vh - 300px)"
+              >
+                <table class="w-full table-fixed">
+                  <tbody>
+                    <tr
+                      *ngFor="let client of clients; let i = index"
+                      [ngClass]="i % 2 === 0 ? 'bg-white' : 'bg-gray-100'"
+                      class="border-b hover:bg-gray-50"
+                    >
+                      <td class="p-2 w-3/12 truncate">{{ client.nome }}</td>
+                      <td class="p-2 w-2/12">{{ client.cpf }}</td>
+                      <td class="p-2 w-2/12 text-left">
+                        {{ client.telefone }}
+                      </td>
+                      <td class="p-2 w-3/12 truncate">{{ client.email }}</td>
+                      <td class="p-1 w-2/12">
+                        <div class="flex justify-center gap-2">
+                          <button
+                            class="text-blue-500 hover:text-blue-700 p-1 h-8 w-8 flex items-center justify-center rounded-full hover:bg-blue-100"
+                            (click)="editClient(client)"
+                            title="Editar"
+                          >
+                            <span class="material-icons text-lg">edit</span>
+                          </button>
+                          <button
+                            class="text-red-500 hover:text-red-700 p-1 h-8 w-8 flex items-center justify-center rounded-full hover:bg-red-100"
+                            (click)="deleteClient(client)"
+                            title="Excluir"
+                          >
+                            <span class="material-icons text-lg">delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr *ngIf="clients.length === 0">
+                      <td colspan="5" class="p-4 text-center text-gray-500">
+                        Nenhum cliente cadastrado.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>

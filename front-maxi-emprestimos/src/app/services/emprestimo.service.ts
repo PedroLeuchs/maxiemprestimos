@@ -38,4 +38,11 @@ export class EmprestimoService {
   deleteEmprestimo(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+
+  updateEmprestimo(emprestimo: Emprestimo): Observable<Emprestimo> {
+    return this.http.put<Emprestimo>(
+      `${this.apiUrl}/${emprestimo.idEmprestimo}`,
+      emprestimo
+    );
+  }
 }

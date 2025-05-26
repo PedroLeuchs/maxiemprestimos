@@ -23,6 +23,12 @@ export class ClientService {
   getClients(): Observable<Client[]> {
     return this.http.get<Client[]>(this.apiUrl);
   }
+
+  // GET /api/clientes/:id
+  getClientById(id: number): Observable<Client> {
+    return this.http.get<Client>(`${this.apiUrl}/${id}`);
+  }
+
   // POST /api/clientes
   addClient(client: Omit<Client, 'idCliente'>): Observable<Client> {
     return this.http.post<Client>(this.apiUrl, client);

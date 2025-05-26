@@ -1,12 +1,12 @@
 <div *ngIf="isVisible" class="modal-backdrop" (click)="closeModal()">
   <div class="modal-container" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2 class="text-lg font-semibold">Detalhes do Empréstimo</h2>
+      <h2 class="text-lg font-medium">Detalhes do Empréstimo</h2>
       <button class="close-button" (click)="closeModal()">&times;</button>
     </div>
     <div class="modal-body" *ngIf="emprestimo">
       <div class="mb-4">
-        <h3 class="text-lg font-semibold text-gray-800 mb-2">
+        <h3 class="text-lg font-medium text-gray-800 mb-2">
           Informações Gerais
         </h3>
         <div class="details-grid">
@@ -32,9 +32,7 @@
       </div>
 
       <div class="mb-4">
-        <h3 class="text-lg font-semibold text-gray-800 mb-2">
-          Valores e Taxas
-        </h3>
+        <h3 class="text-lg font-medium text-gray-800 mb-2">Valores e Taxas</h3>
         <div class="details-grid">
           <div class="detail-item">
             <div class="detail-label">Moeda</div>
@@ -76,9 +74,7 @@
       </div>
 
       <div class="mb-4">
-        <h3 class="text-lg font-semibold text-gray-800 mb-2">
-          Valores em Reais
-        </h3>
+        <h3 class="text-lg font-medium text-gray-800 mb-2">Valores em Reais</h3>
         <div class="details-grid">
           <div class="detail-item">
             <div class="detail-label">Valor Bruto em Reais</div>
